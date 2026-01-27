@@ -1,0 +1,43 @@
+# dbt
+target/
+dbt_packages/
+logs/
+dbt_modules/
+
+# Benchmark/run logs (Artemis should create its own)
+*_run.log
+baseline*.log
+optimized*.log
+benchmark*.log
+comparison*.log
+
+# Python
+*.pyc
+__pycache__/
+*.egg-info/
+.eggs/
+
+# Environment
+.env
+.env.local
+*.env
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Credentials (never commit passwords)
+profiles.yml.backup
+*_secret*
+*_password*
+credentials/
