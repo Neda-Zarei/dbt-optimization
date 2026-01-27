@@ -1,0 +1,199 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw data from source systems
+    database: DBT_DEMO
+    schema: DEV
+    tables:
+      # Pipeline A Sources
+      - name: cashflows
+        description: Raw cashflow transactions (contributions, distributions, dividends, fees)
+        columns:
+          - name: cashflow_id
+            description: Primary key for cashflow record
+            tests:
+              - unique
+              - not_null
+          - name: portfolio_id
+            description: Foreign key to portfolio
+            tests:
+              - not_null
+          - name: cashflow_type
+            description: Type of cashflow (CONTRIBUTION, DISTRIBUTION, DIVIDEND, FEE)
+          - name: cashflow_date
+            description: Date of the cashflow
+          - name: amount
+            description: Cashflow amount (positive for inflows, negative for outflows)
+          - name: currency
+            description: Currency of the cashflow
+
+      - name: portfolios
+        description: Portfolio master data
+        columns:
+          - name: portfolio_id
+            description: Primary key for portfolio
+            tests:
+              - unique
+              - not_null
+          - name: portfolio_name
+            description: Display name of the portfolio
+          - name: portfolio_type
+            description: Type classification (EQUITY, FIXED_INCOME, MULTI_ASSET, etc.)
+          - name: fund_id
+            description: Parent fund identifier
+          - name: status
+            description: Portfolio status (ACTIVE, INACTIVE, CLOSED)
+
+      # Pipeline B Sources
+      - name: trades
+        description: Trade transaction records
+        columns:
+          - name: trade_id
+            description: Primary key for trade
+            tests:
+              - unique
+              - not_null
+          - name: portfolio_id
+            description: Portfolio where trade executed
+          - name: security_id
+            description: Security traded
+          - name: trade_date
+            description: Trade execution date
+          - name: trade_type
+            description: Type of trade (BUY, SELL, SHORT, COVER)
+          - name: quantity
+            description: Number of shares/units traded
+          - name: price
+            description: Execution price
+          - name: net_amount
+            description: Net settlement amount
+
+      - name: securities
+        description: Security master data
+        columns:
+          - name: security_id
+            description: Primary key for security
+            tests:
+              - unique
+              - not_null
+          - name: ticker
+            description: Trading ticker symbol
+          - name: security_name
+            description: Full security name
+          - name: security_type
+            description: Type (STOCK, BOND, ETF, etc.)
+          - name: asset_class
+            description: Asset class categorization
+          - name: sector
+            description: GICS sector
+          - name: industry
+            description: GICS industry
+
+      - name: market_prices
+        description: Daily market price data
+        columns:
+          - name: security_id
+            description: Foreign key to security
+          - name: price_date
+            description: Price date
+          - name: close_price
+            description: Closing price
+          - name: volume
+            description: Trading volume
+
+      - name: brokers
+        description: Broker/counterparty information
+        columns:
+          - name: broker_id
+            description: Primary key for broker
+            tests:
+              - unique
+              - not_null
+          - name: broker_name
+            description: Broker display name
+
+      # Pipeline C Sources
+      - name: positions_daily
+        description: Daily position snapshots
+        columns:
+          - name: position_id
+            description: Primary key
+            tests:
+              - unique
+              - not_null
+          - name: portfolio_id
+            description: Portfolio holding the position
+          - name: security_id
+            description: Security held
+          - name: position_date
+            description: Snapshot date
+          - name: quantity
+            description: Position quantity
+          - name: market_value_usd
+            description: Market value in USD
+
+      - name: benchmarks
+        description: Benchmark index definitions
+        columns:
+          - name: benchmark_id
+            description: Primary key for benchmark
+            tests:
+              - unique
+              - not_null
+          - name: benchmark_name
+            description: Benchmark display name
+          - name: benchmark_ticker
+            description: Benchmark ticker (SPY, AGG, etc.)
+
+      - name: benchmark_returns
+        description: Daily benchmark return data
+        columns:
+          - name: benchmark_id
+            description: Foreign key to benchmark
+          - name: return_date
+            description: Return date
+          - name: daily_return
+            description: Daily percentage return
+
+      - name: portfolio_benchmarks
+        description: Portfolio to benchmark mapping
+        columns:
+          - name: portfolio_id
+            description: Portfolio identifier
+          - name: benchmark_id
+            description: Benchmark identifier
+          - name: is_primary
+            description: Whether this is the primary benchmark
+
+      - name: fund_hierarchy
+        description: Fund/portfolio organizational hierarchy
+        columns:
+          - name: entity_id
+            description: Entity identifier
+            tests:
+              - unique
+              - not_null
+          - name: entity_type
+            description: FUND, STRATEGY, PORTFOLIO
+          - name: parent_entity_id
+            description: Parent in hierarchy
+          - name: hierarchy_level
+            description: Depth in hierarchy (1=top)
+
+      - name: valuations
+        description: Portfolio NAV and valuation data
+        columns:
+          - name: valuation_id
+            description: Primary key
+            tests:
+              - unique
+              - not_null
+          - name: portfolio_id
+            description: Portfolio valued
+          - name: valuation_date
+            description: Valuation date
+          - name: nav
+            description: Net asset value
+          - name: nav_usd
+            description: NAV converted to USD

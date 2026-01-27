@@ -1,0 +1,16 @@
+security_id,ticker,security_name,security_type,asset_class,sector,industry,country,currency
+SEC001,AAPL,Apple Inc,STOCK,EQUITY,Technology,Consumer Electronics,US,USD
+SEC002,MSFT,Microsoft Corporation,STOCK,EQUITY,Technology,Software,US,USD
+SEC003,GOOGL,Alphabet Inc,STOCK,EQUITY,Technology,Internet Services,US,USD
+SEC004,AMZN,Amazon.com Inc,STOCK,EQUITY,Consumer Discretionary,Internet Retail,US,USD
+SEC005,JPM,JPMorgan Chase & Co,STOCK,EQUITY,Financials,Banks,US,USD
+SEC006,JNJ,Johnson & Johnson,STOCK,EQUITY,Healthcare,Pharmaceuticals,US,USD
+SEC007,V,Visa Inc,STOCK,EQUITY,Financials,Payment Services,US,USD
+SEC008,PG,Procter & Gamble Co,STOCK,EQUITY,Consumer Staples,Household Products,US,USD
+SEC009,UNH,UnitedHealth Group,STOCK,EQUITY,Healthcare,Managed Care,US,USD
+SEC010,HD,Home Depot Inc,STOCK,EQUITY,Consumer Discretionary,Home Improvement,US,USD
+SEC011,AGG,iShares Core US Agg Bond,ETF,FIXED_INCOME,Fixed Income,Aggregate Bond,US,USD
+SEC012,LQD,iShares iBoxx $ IG Corp,ETF,FIXED_INCOME,Fixed Income,Corporate Bond,US,USD
+SEC013,HYG,iShares iBoxx $ High Yield,ETF,FIXED_INCOME,Fixed Income,High Yield,US,USD
+SEC014,TLT,iShares 20+ Year Treasury,ETF,FIXED_INCOME,Fixed Income,Government Bond,US,USD
+SEC015,SPY,SPDR S&P 500 ETF,ETF,EQUITY,Equity,Large Cap Blend,US,USD

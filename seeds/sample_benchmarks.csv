@@ -1,0 +1,9 @@
+benchmark_id,benchmark_name,benchmark_ticker,benchmark_type,currency,is_active
+BM001,S&P 500 Total Return,SPX,EQUITY,USD,true
+BM002,MSCI ACWI,MXWD,EQUITY,USD,true
+BM003,Bloomberg US Aggregate,LBUSTRUU,FIXED_INCOME,USD,true
+BM004,Bloomberg US High Yield,LF98TRUU,FIXED_INCOME,USD,true
+BM005,MSCI Emerging Markets,MXEF,EQUITY,USD,true
+BM006,60/40 Blended Benchmark,BLEND6040,MULTI_ASSET,USD,true
+BM007,Russell 2000,RTY,EQUITY,USD,true
+BM008,MSCI EAFE,MXEA,EQUITY,USD,true

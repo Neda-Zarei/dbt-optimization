@@ -1,0 +1,56 @@
+name: 'bain_capital_portfolio_analytics'
+version: '1.0.0'
+config-version: 2
+
+profile: 'bain_capital'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+vars:
+  # Date range for analysis
+  start_date: '2020-01-01'
+  end_date: '2024-12-31'
+  # Default lookback periods
+  default_lookback_days: 90
+  ytd_lookback_days: 365
+
+models:
+  bain_capital_portfolio_analytics:
+    # Pipeline A: Simple cashflow pipeline
+    pipeline_a:
+      +schema: pipeline_a
+      staging:
+        +materialized: view
+      marts:
+        +materialized: table
+
+    # Pipeline B: Medium complexity trade analytics
+    pipeline_b:
+      +schema: pipeline_b
+      staging:
+        +materialized: view
+      intermediate:
+        +materialized: ephemeral
+      marts:
+        +materialized: table
+
+    # Pipeline C: Complex portfolio analytics
+    pipeline_c:
+      +schema: pipeline_c
+      staging:
+        +materialized: view
+      intermediate:
+        +materialized: view
+      marts:
+        +materialized: table
+        +post-hook:
+          - "ANALYZE TABLE {{ this }}"

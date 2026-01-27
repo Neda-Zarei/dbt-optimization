@@ -1,0 +1,83 @@
+version: 2
+
+models:
+  # Staging Models
+  - name: stg_cashflows
+    description: Staged cashflow data with basic transformations
+    columns:
+      - name: cashflow_id
+        description: Primary key
+        tests:
+          - unique
+          - not_null
+      - name: portfolio_id
+        description: Portfolio identifier
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_portfolios')
+              field: portfolio_id
+      - name: cashflow_type
+        description: Type of cashflow
+        tests:
+          - accepted_values:
+              values: ['CONTRIBUTION', 'DISTRIBUTION', 'DIVIDEND', 'FEE']
+      - name: cashflow_date
+        description: Date of cashflow
+        tests:
+          - not_null
+      - name: amount
+        description: Cashflow amount
+        tests:
+          - not_null
+
+  - name: stg_portfolios
+    description: Staged portfolio master data
+    columns:
+      - name: portfolio_id
+        description: Primary key
+        tests:
+          - unique
+          - not_null
+      - name: portfolio_name
+        description: Portfolio display name
+        tests:
+          - not_null
+      - name: status
+        description: Portfolio status
+        tests:
+          - accepted_values:
+              values: ['ACTIVE', 'INACTIVE', 'CLOSED']
+
+  # Mart Models
+  - name: fact_cashflow_summary
+    description: Monthly cashflow aggregations by portfolio
+    columns:
+      - name: cashflow_summary_key
+        description: Surrogate key
+        tests:
+          - unique
+          - not_null
+      - name: portfolio_id
+        tests:
+          - not_null
+      - name: total_amount
+        description: Sum of cashflows for the period
+      - name: transaction_count
+        description: Number of transactions
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+
+  - name: report_monthly_cashflows
+    description: LP reporting view for cashflow analysis
+    columns:
+      - name: portfolio_id
+        tests:
+          - not_null
+      - name: contributions
+        description: Total contributions for the month
+      - name: distributions
+        description: Total distributions for the month
+      - name: net_inflow
+        description: Contributions minus distributions

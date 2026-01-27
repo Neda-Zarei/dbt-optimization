@@ -1,0 +1,11 @@
+entity_id,entity_name,entity_type,parent_entity_id,hierarchy_level,is_active
+FD001,Bain Capital Public Equity,FUND,,1,true
+FD002,Bain Capital Credit,FUND,,1,true
+FD003,Bain Capital Multi-Strategy,FUND,,1,true
+FD004,Bain Capital Alternatives,FUND,,1,true
+ST001,Large Cap Strategy,STRATEGY,FD001,2,true
+ST002,Growth Strategy,STRATEGY,FD001,2,true
+ST003,Investment Grade Strategy,STRATEGY,FD002,2,true
+ST004,High Yield Strategy,STRATEGY,FD002,2,true
+ST005,Balanced Strategy,STRATEGY,FD003,2,true
+ST006,EM Strategy,STRATEGY,FD003,2,true

@@ -1,0 +1,12 @@
+
+    
+    
+    truncate table "DBT_DEMO"."DEV"."DIM_DATE";
+    -- dbt seed --
+    
+            insert into DBT_DEMO.DEV.dim_date (date_key, full_date, year, quarter, month, month_name, week, day_of_week, day_name, is_weekend, is_month_end, is_quarter_end) values
+            (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s),(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s),(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s),(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s),(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s),(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s),(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        
+
+;
+  

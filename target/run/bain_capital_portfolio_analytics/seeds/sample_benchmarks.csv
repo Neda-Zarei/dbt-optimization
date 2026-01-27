@@ -1,0 +1,12 @@
+
+    
+    
+    truncate table "DBT_DEMO"."DEV"."SAMPLE_BENCHMARKS";
+    -- dbt seed --
+    
+            insert into DBT_DEMO.DEV.sample_benchmarks (benchmark_id, benchmark_name, benchmark_ticker, benchmark_type, currency, is_active) values
+            (%s,%s,%s,%s,%s,%s),(%s,%s,%s,%s,%s,%s),(%s,%s,%s,%s,%s,%s),(%s,%s,%s,%s,%s,%s),(%s,%s,%s,%s,%s,%s),(%s,%s,%s,%s,%s,%s),(%s,%s,%s,%s,%s,%s),(%s,%s,%s,%s,%s,%s)
+        
+
+;
+  

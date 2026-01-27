@@ -1,0 +1,124 @@
+version: 2
+
+models:
+  # Staging Models
+  - name: stg_trades
+    description: Staged trade transactions with categorization
+    columns:
+      - name: trade_id
+        tests:
+          - unique
+          - not_null
+      - name: portfolio_id
+        tests:
+          - not_null
+      - name: security_id
+        tests:
+          - not_null
+      - name: trade_date
+        tests:
+          - not_null
+      - name: trade_category
+        tests:
+          - accepted_values:
+              values: ['PURCHASE', 'SALE', 'INCOME', 'OTHER']
+      - name: trade_size_bucket
+        tests:
+          - accepted_values:
+              values: ['LARGE', 'MEDIUM', 'SMALL', 'MICRO']
+
+  - name: stg_securities
+    description: Staged security master data
+    columns:
+      - name: security_id
+        tests:
+          - unique
+          - not_null
+      - name: ticker
+        tests:
+          - not_null
+      - name: security_type_standardized
+        tests:
+          - accepted_values:
+              values: ['EQUITY', 'FIXED_INCOME', 'DERIVATIVE', 'FUND', 'OTHER']
+
+  - name: stg_market_prices
+    description: Daily market prices with technical indicators
+    columns:
+      - name: security_id
+        tests:
+          - not_null
+      - name: price_date
+        tests:
+          - not_null
+      - name: close_price
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: trend_signal
+        tests:
+          - accepted_values:
+              values: ['BULLISH', 'BEARISH', 'NEUTRAL']
+
+  - name: stg_brokers
+    description: Broker reference data
+
+  # Intermediate Models
+  - name: int_trades_enriched
+    description: Trades enriched with security and market data
+    columns:
+      - name: trade_id
+        tests:
+          - unique
+          - not_null
+
+  - name: int_trade_pnl
+    description: Trade-level P&L calculations
+    columns:
+      - name: trade_id
+        tests:
+          - unique
+          - not_null
+      - name: running_position
+        description: Running position after this trade
+      - name: realized_pnl
+        description: Realized P&L for sale trades
+
+  # Mart Models
+  - name: fact_trade_summary
+    description: Trade fact table for analysis
+    columns:
+      - name: trade_key
+        tests:
+          - unique
+          - not_null
+      - name: trade_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fact_portfolio_positions
+    description: Current position snapshot
+    columns:
+      - name: position_key
+        tests:
+          - unique
+          - not_null
+      - name: current_quantity
+        description: Current position quantity
+      - name: market_value
+        description: Current market value
+      - name: unrealized_pnl
+        description: Unrealized gain/loss
+
+  - name: report_trading_performance
+    description: Trading performance dashboard
+    columns:
+      - name: portfolio_id
+        tests:
+          - not_null
+      - name: total_realized_pnl
+        description: Total realized P&L for period
+      - name: total_pnl
+        description: Combined realized and unrealized P&L

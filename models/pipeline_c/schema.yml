@@ -1,0 +1,162 @@
+version: 2
+
+models:
+  # Staging Models
+  - name: stg_positions_daily
+    description: Daily position snapshots
+    columns:
+      - name: position_id
+        tests:
+          - unique
+          - not_null
+      - name: portfolio_id
+        tests:
+          - not_null
+      - name: security_id
+        tests:
+          - not_null
+      - name: position_date
+        tests:
+          - not_null
+
+  - name: stg_benchmarks
+    description: Benchmark definitions
+
+  - name: stg_benchmark_returns
+    description: Daily benchmark returns with rolling metrics
+
+  - name: stg_portfolio_benchmarks
+    description: Portfolio to benchmark mapping
+
+  - name: stg_fund_hierarchy
+    description: Organizational hierarchy
+
+  - name: stg_valuations
+    description: Portfolio NAV data
+    columns:
+      - name: valuation_id
+        tests:
+          - unique
+          - not_null
+      - name: nav_usd
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+
+  # Intermediate Models
+  - name: int_portfolio_returns_daily
+    description: Daily portfolio returns from NAV changes
+    columns:
+      - name: portfolio_id
+        tests:
+          - not_null
+      - name: valuation_date
+        tests:
+          - not_null
+
+  - name: int_benchmark_aligned
+    description: Benchmark returns aligned to portfolio dates
+
+  - name: int_portfolio_vs_benchmark
+    description: Portfolio vs benchmark comparison
+    columns:
+      - name: daily_excess_return
+        description: Portfolio return minus benchmark return
+      - name: tracking_error_1y
+        description: Annualized tracking error
+      - name: information_ratio
+        description: Risk-adjusted excess return
+
+  - name: int_position_attribution
+    description: Position-level attribution analysis
+    columns:
+      - name: contribution_to_return
+        description: Position contribution to portfolio return
+      - name: allocation_effect
+        description: Allocation effect from Brinson attribution
+
+  - name: int_sector_attribution
+    description: Sector-level attribution
+
+  - name: int_risk_metrics
+    description: Portfolio risk metrics
+    columns:
+      - name: sharpe_ratio
+        description: Risk-adjusted return (annualized)
+      - name: sortino_ratio
+        description: Downside risk-adjusted return
+      - name: max_drawdown
+        description: Maximum peak-to-trough decline
+      - name: var_95_1d
+        description: 1-day Value at Risk (95% confidence)
+
+  - name: int_fund_rollup
+    description: Fund-level aggregations
+
+  # Mart Models
+  - name: fact_portfolio_performance
+    description: Main performance fact table
+    columns:
+      - name: performance_key
+        tests:
+          - unique
+          - not_null
+      - name: portfolio_id
+        tests:
+          - not_null
+      - name: valuation_date
+        tests:
+          - not_null
+      - name: sharpe_ratio
+        description: Annualized Sharpe ratio
+      - name: information_ratio
+        description: Risk-adjusted alpha
+
+  - name: fact_position_snapshot
+    description: Position-level fact with attribution
+    columns:
+      - name: position_snapshot_key
+        tests:
+          - unique
+          - not_null
+
+  - name: fact_sector_performance
+    description: Sector-level performance
+    columns:
+      - name: sector_performance_key
+        tests:
+          - unique
+          - not_null
+
+  - name: fact_fund_summary
+    description: Fund-level summary metrics
+    columns:
+      - name: fund_summary_key
+        tests:
+          - unique
+          - not_null
+
+  - name: report_ic_dashboard
+    description: Investment Committee dashboard
+    columns:
+      - name: portfolio_id
+        tests:
+          - unique
+          - not_null
+      - name: composite_score
+        description: Weighted performance score
+
+  - name: report_lp_quarterly
+    description: Quarterly LP report with period comparisons
+    columns:
+      - name: portfolio_id
+        tests:
+          - not_null
+      - name: quarter_end
+        tests:
+          - not_null
+      - name: tvpi
+        description: Total Value to Paid-In ratio
+      - name: dpi
+        description: Distributions to Paid-In ratio
