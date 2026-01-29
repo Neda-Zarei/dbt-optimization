@@ -1,0 +1,150 @@
+# Threshold Configuration for Benchmark Comparison Engine
+# 
+# Metrics can have either:
+# - max_increase_percent: Percentage-based threshold (relative to baseline)
+# - max_increase_absolute: Absolute threshold (in native units)
+#
+# Severity levels affect exit code and reporting:
+# - critical: Always results in ERROR (exit code 2)
+# - high: Results in ERROR if violation > 50% of threshold, else WARNING
+# - medium: Results in WARNING
+#
+# Improvements (negative deltas) are optionally reported as INFO level
+
+thresholds:
+  # ==========================================
+  # Execution Time and Performance
+  # ==========================================
+  execution_time_ms:
+    max_increase_percent: 10
+    severity: "high"
+    description: "Query execution time - 10% increase tolerance"
+  
+  compilation_time_ms:
+    max_increase_percent: 25
+    severity: "medium"
+    description: "Query compilation time - 25% increase tolerance"
+  
+  # ==========================================
+  # Data Scanning and I/O
+  # ==========================================
+  bytes_scanned:
+    max_increase_percent: 20
+    severity: "high"
+    description: "Bytes scanned from storage - 20% increase tolerance"
+  
+  rows_scanned:
+    max_increase_percent: 20
+    severity: "medium"
+    description: "Number of rows scanned - 20% increase tolerance"
+  
+  # ==========================================
+  # Cost Metrics
+  # ==========================================
+  warehouse_credits:
+    max_increase_percent: 15
+    severity: "critical"
+    description: "Warehouse credits consumed - 15% increase tolerance"
+  
+  # ==========================================
+  # Spilling (Memory Overflow)
+  # ==========================================
+  spilling_to_local_storage_bytes:
+    max_increase_absolute: 1073741824  # 1GB in bytes
+    severity: "high"
+    description: "Local disk spilling - 1GB increase tolerance"
+  
+  spilling_to_remote_storage_bytes:
+    max_increase_absolute: 104857600  # 100MB in bytes
+    severity: "critical"
+    description: "Remote storage spilling - 100MB increase tolerance"
+  
+  # ==========================================
+  # Partitioning Metrics
+  # ==========================================
+  partition_pruning_ratio:
+    max_increase_percent: -10  # Allow 10% decrease in pruning (worse partitioning)
+    severity: "medium"
+    description: "Partition pruning effectiveness - 10% decrease tolerance"
+  
+  partitions_scanned:
+    max_increase_percent: 25
+    severity: "medium"
+    description: "Number of partitions scanned - 25% increase tolerance"
+  
+  # ==========================================
+  # Query Complexity Metrics
+  # ==========================================
+  join_count:
+    max_increase_percent: 30
+    severity: "medium"
+    description: "Number of joins - 30% increase tolerance"
+  
+  subquery_depth:
+    max_increase_percent: 20
+    severity: "medium"
+    description: "Maximum subquery nesting depth - 20% increase tolerance"
+  
+  window_function_count:
+    max_increase_percent: 25
+    severity: "medium"
+    description: "Number of window functions - 25% increase tolerance"
+  
+  # ==========================================
+  # Pipeline-level Aggregations
+  # ==========================================
+  total_execution_time_ms:
+    max_increase_percent: 10
+    severity: "high"
+    description: "Total pipeline execution time - 10% increase tolerance"
+  
+  total_compilation_time_ms:
+    max_increase_percent: 25
+    severity: "medium"
+    description: "Total pipeline compilation time - 25% increase tolerance"
+  
+  total_bytes_scanned:
+    max_increase_percent: 20
+    severity: "high"
+    description: "Total bytes scanned across pipeline - 20% increase tolerance"
+  
+  total_rows_scanned:
+    max_increase_percent: 20
+    severity: "medium"
+    description: "Total rows scanned across pipeline - 20% increase tolerance"
+  
+  total_warehouse_credits:
+    max_increase_percent: 15
+    severity: "critical"
+    description: "Total warehouse credits - 15% increase tolerance"
+  
+  total_spilling_bytes:
+    max_increase_absolute: 2147483648  # 2GB in bytes
+    severity: "high"
+    description: "Total spilling across pipeline - 2GB increase tolerance"
+  
+  model_count:
+    # Model count should not change - treat as informational
+    max_increase_percent: 0
+    severity: "medium"
+    description: "Number of models in pipeline - no change expected"
+  
+  avg_execution_time_ms:
+    max_increase_percent: 10
+    severity: "high"
+    description: "Average model execution time - 10% increase tolerance"
+  
+  avg_join_count:
+    max_increase_percent: 20
+    severity: "medium"
+    description: "Average joins per model - 20% increase tolerance"
+  
+  avg_subquery_depth:
+    max_increase_percent: 15
+    severity: "medium"
+    description: "Average subquery depth - 15% increase tolerance"
+  
+  avg_window_function_count:
+    max_increase_percent: 20
+    severity: "medium"
+    description: "Average window functions per model - 20% increase tolerance"
