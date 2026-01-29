@@ -49,7 +49,10 @@ transformed as (
         cast(market_value_usd as decimal(18,2)) as market_value_usd,
         cast(unrealized_pnl as decimal(18,2)) as unrealized_pnl,
         cast(unrealized_pnl_pct as decimal(10,4)) as unrealized_pnl_pct,
-        cast(weight_pct as decimal(10,6)) as weight_pct,
+        cast(market_value_usd as decimal(18,2))
+            / nullif(sum(cast(market_value_usd as decimal(18,2))) over (
+                partition by portfolio_id, cast(position_date as date)
+            ), 0) as weight_pct,
         created_at,
         updated_at
     from source
