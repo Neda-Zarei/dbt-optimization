@@ -1,0 +1,33 @@
+{
+  "pipeline": "B",
+  "captured_at": "20260129_215009",
+  "execution_context": {
+    "start_time": "20260129_215012",
+    "end_time": "20260129_215105",
+    "duration_seconds": 52.970741,
+    "dbt_version": null,
+    "git_commit": "6ca4ad0e163b705a83af2c572b4afb7a7c6c0ac4",
+    "project_root": ".",
+    "dependencies_executed": [
+      "B"
+    ],
+    "models_executed": []
+  },
+  "pipeline_metadata": {
+    "name": "Medium Complexity Trade Analytics",
+    "schema": "pipeline_b",
+    "models": "+pipeline_b.*",
+    "dependencies": []
+  },
+  "metrics": {
+    "collection_enabled": true
+  },
+  "validation": {
+    "schema": "pipeline_b",
+    "validation_enabled": true
+  },
+  "summary": {
+    "status": "SUCCESS",
+    "errors": []
+  }
+}

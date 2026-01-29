@@ -1,0 +1,33 @@
+{
+  "pipeline": "A",
+  "captured_at": "20260129_215007",
+  "execution_context": {
+    "start_time": "20260129_215011",
+    "end_time": "20260129_215026",
+    "duration_seconds": 15.163146,
+    "dbt_version": null,
+    "git_commit": "6ca4ad0e163b705a83af2c572b4afb7a7c6c0ac4",
+    "project_root": ".",
+    "dependencies_executed": [
+      "A"
+    ],
+    "models_executed": []
+  },
+  "pipeline_metadata": {
+    "name": "Simple Cashflow Pipeline",
+    "schema": "pipeline_a",
+    "models": "+pipeline_a.*",
+    "dependencies": []
+  },
+  "metrics": {
+    "collection_enabled": true
+  },
+  "validation": {
+    "schema": "pipeline_a",
+    "validation_enabled": true
+  },
+  "summary": {
+    "status": "SUCCESS",
+    "errors": []
+  }
+}
