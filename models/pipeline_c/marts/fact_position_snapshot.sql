@@ -2,9 +2,6 @@
 -- Model: fact_position_snapshot
 -- Description: Position-level fact table with attribution
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Heavy joins that duplicate upstream work
--- 2. Could be more selective in columns
 
 with position_attribution as (
     select * from {{ ref('int_position_attribution') }}
@@ -14,7 +11,6 @@ portfolios as (
     select * from {{ ref('stg_portfolios') }}
 ),
 
--- ISSUE: Re-joining portfolio data
 final as (
     select
         {{ dbt_utils.generate_surrogate_key(['pa.portfolio_id', 'pa.security_id', 'pa.position_date']) }} as position_snapshot_key,
@@ -40,7 +36,6 @@ final as (
         pa.contribution_to_return,
         pa.allocation_effect,
         pa.position_pnl,
-        -- ISSUE: More date extractions
         extract(year from pa.position_date) as position_year,
         extract(month from pa.position_date) as position_month,
         date_trunc('month', pa.position_date) as position_month_start

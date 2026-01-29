@@ -2,16 +2,11 @@
 -- Model: int_trade_pnl
 -- Description: Calculate P&L for each trade
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Complex position tracking logic that could be simplified
--- 2. Multiple self-joins for cost basis calculation
--- 3. Window functions recalculated multiple times
 
 with trades as (
     select * from {{ ref('int_trades_enriched') }}
 ),
 
--- ISSUE: Running position calculation done inefficiently
 positions as (
     select
         trade_id,
@@ -30,7 +25,6 @@ positions as (
         execution_price,
         net_amount,
         commission,
-        -- ISSUE: Multiple window functions with same partition
         sum(case
             when trade_category = 'PURCHASE' then quantity
             when trade_category = 'SALE' then -quantity
@@ -49,7 +43,6 @@ positions as (
             order by trade_date, trade_id
             rows between unbounded preceding and current row
         ) as cumulative_cost,
-        -- ISSUE: Another separate window for purchase-only
         sum(case when trade_category = 'PURCHASE' then quantity else 0 end) over (
             partition by portfolio_id, security_id
             order by trade_date, trade_id
@@ -63,7 +56,6 @@ positions as (
     from trades
 ),
 
--- ISSUE: Separate CTE for cost basis
 with_cost_basis as (
     select
         *,
@@ -75,7 +67,6 @@ with_cost_basis as (
     from positions
 ),
 
--- ISSUE: Another pass for realized P&L
 with_pnl as (
     select
         *,

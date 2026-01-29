@@ -2,9 +2,6 @@
 -- Model: stg_benchmark_returns
 -- Description: Daily benchmark return data
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Self-join for cumulative returns (inefficient)
--- 2. Multiple window functions
 
 with source as (
     select
@@ -17,14 +14,12 @@ with source as (
     where return_date >= '{{ var("start_date") }}'
 ),
 
--- ISSUE: Multiple window functions that could be consolidated
 with_cumulative as (
     select
         benchmark_id,
         return_date,
         daily_return,
         index_level,
-        -- ISSUE: Separate window functions for each period
         exp(sum(ln(1 + daily_return)) over (
             partition by benchmark_id
             order by return_date

@@ -2,23 +2,17 @@
 -- Model: int_risk_metrics
 -- Description: Calculate risk metrics for portfolios
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Multiple window functions with same partition
--- 2. VaR calculation inefficiencies
--- 3. Could pre-compute some metrics
 
 with portfolio_returns as (
     select * from {{ ref('int_portfolio_returns_daily') }}
 ),
 
--- ISSUE: Multiple passes for different risk calculations
 with_risk_metrics as (
     select
         portfolio_id,
         valuation_date,
         daily_return_mod_dietz as daily_return,
         nav_usd,
-        -- ISSUE: Repeated window frame definitions
         -- Max drawdown components
         max(nav_usd) over (
             partition by portfolio_id
@@ -43,7 +37,6 @@ with_risk_metrics as (
     from portfolio_returns
 ),
 
--- ISSUE: Another CTE for derived metrics
 with_derived as (
     select
         *,
@@ -64,7 +57,6 @@ with_derived as (
     from with_risk_metrics
 ),
 
--- ISSUE: Max drawdown calculation
 with_max_drawdown as (
     select
         *,
@@ -76,7 +68,6 @@ with_max_drawdown as (
     from with_derived
 ),
 
--- ISSUE: VaR calculation (simplified parametric)
 final as (
     select
         *,

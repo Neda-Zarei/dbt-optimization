@@ -2,10 +2,6 @@
 -- Model: int_portfolio_vs_benchmark
 -- Description: Compare portfolio returns to benchmark
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Re-joins data that could be joined once upstream
--- 2. Excess return calculation repeated
--- 3. Complex rolling calculations
 
 with portfolio_returns as (
     select * from {{ ref('int_portfolio_returns_daily') }}
@@ -16,7 +12,6 @@ benchmark_aligned as (
     where is_primary = true
 ),
 
--- ISSUE: Another join that combines already-processed data
 combined as (
     select
         pr.portfolio_id,
@@ -42,7 +37,6 @@ combined as (
         and pr.valuation_date = ba.valuation_date
 ),
 
--- ISSUE: Excess return calculations
 with_excess as (
     select
         *,
@@ -54,7 +48,6 @@ with_excess as (
     from combined
 ),
 
--- ISSUE: Rolling tracking error calculation
 with_tracking_error as (
     select
         *,
@@ -71,7 +64,6 @@ with_tracking_error as (
     from with_excess
 ),
 
--- ISSUE: Information ratio
 final as (
     select
         *,

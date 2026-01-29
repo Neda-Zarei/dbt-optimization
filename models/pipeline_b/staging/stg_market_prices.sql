@@ -2,10 +2,6 @@
 -- Model: stg_market_prices
 -- Description: Staging model for daily market prices
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Self-join for prior day prices (inefficient)
--- 2. Late aggregation
--- 3. Multiple window functions that could be consolidated
 
 with source as (
     select
@@ -21,7 +17,6 @@ with source as (
     where price_date >= '{{ var("start_date") }}'
 ),
 
--- ISSUE: Self-join to get prior day price (should use LAG)
 with_prior_day as (
     select
         curr.security_id,
@@ -36,10 +31,9 @@ with_prior_day as (
     from source curr
     left join source prev
         on curr.security_id = prev.security_id
-        and curr.price_date = dateadd('day', 1, prev.price_date)  -- ISSUE: Doesn't handle weekends
+        and curr.price_date = dateadd('day', 1, prev.price_date)
 ),
 
--- ISSUE: Multiple separate window functions
 with_returns as (
     select
         *,
@@ -49,7 +43,6 @@ with_returns as (
             then (close_price - prior_close) / prior_close
             else null
         end as daily_return,
-        -- ISSUE: These could be computed together
         avg(close_price) over (
             partition by security_id
             order by price_date
@@ -78,7 +71,6 @@ with_returns as (
     from with_prior_day
 ),
 
--- ISSUE: Another pass for more calculations
 final as (
     select
         *,

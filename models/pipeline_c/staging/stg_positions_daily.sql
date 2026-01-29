@@ -2,10 +2,6 @@
 -- Model: stg_positions_daily
 -- Description: Daily position snapshots from source system
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Heavy transformations before filtering
--- 2. Unnecessary type conversions
--- 3. Could push filters upstream
 
 with source as (
     select
@@ -27,7 +23,6 @@ with source as (
     from {{ source('raw', 'positions_daily') }}
 ),
 
--- ISSUE: Transformations applied to all rows before filter
 transformed as (
     select
         position_id,
@@ -51,7 +46,6 @@ transformed as (
     from source
 ),
 
--- ISSUE: Filter applied last
 filtered as (
     select *
     from transformed

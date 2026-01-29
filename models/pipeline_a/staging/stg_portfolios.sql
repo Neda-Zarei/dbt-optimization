@@ -2,9 +2,6 @@
 -- Model: stg_portfolios
 -- Description: Staging model for portfolio master data
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Subquery for deduplication instead of QUALIFY
--- 2. Multiple passes over data
 
 with source as (
     select
@@ -24,7 +21,6 @@ with source as (
     from {{ source('raw', 'portfolios') }}
 ),
 
--- ISSUE: Using subquery filter instead of QUALIFY
 deduplicated as (
     select
         portfolio_id,
@@ -37,10 +33,9 @@ deduplicated as (
         created_at,
         updated_at
     from source
-    where rn = 1  -- ISSUE: Should use QUALIFY in Snowflake
+    where rn = 1
 ),
 
--- ISSUE: Another pass just for active filter
 active_only as (
     select *
     from deduplicated

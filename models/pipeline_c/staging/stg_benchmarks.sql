@@ -15,7 +15,6 @@ with source as (
     from {{ source('raw', 'benchmarks') }}
 ),
 
--- ISSUE: Subquery for deduplication
 deduplicated as (
     select *
     from (

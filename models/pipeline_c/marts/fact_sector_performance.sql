@@ -2,9 +2,6 @@
 -- Model: fact_sector_performance
 -- Description: Sector-level performance aggregation
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Re-aggregates data from upstream
--- 2. Complex window functions
 
 with sector_attribution as (
     select * from {{ ref('int_sector_attribution') }}
@@ -14,7 +11,6 @@ portfolios as (
     select * from {{ ref('stg_portfolios') }}
 ),
 
--- ISSUE: Another portfolio join
 with_portfolio_info as (
     select
         sa.*,
@@ -26,7 +22,6 @@ with_portfolio_info as (
         on sa.portfolio_id = p.portfolio_id
 ),
 
--- ISSUE: More window functions for sector ranking
 with_rankings as (
     select
         *,

@@ -2,10 +2,6 @@
 -- Model: int_portfolio_returns_daily
 -- Description: Calculate daily portfolio returns from NAV
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Self-join for prior day NAV (should use LAG)
--- 2. Multiple passes for return calculations
--- 3. Complex window functions
 
 with valuations as (
     select * from {{ ref('stg_valuations') }}
@@ -21,7 +17,6 @@ cashflows as (
     group by 1, 2
 ),
 
--- ISSUE: Self-join instead of LAG for prior NAV
 with_prior_nav as (
     select
         curr.portfolio_id,
@@ -41,7 +36,6 @@ with_prior_nav as (
         and curr.valuation_date = cf.cashflow_date
 ),
 
--- ISSUE: Modified Dietz calculation done inefficiently
 with_daily_return as (
     select
         portfolio_id,
@@ -67,7 +61,6 @@ with_daily_return as (
     from with_prior_nav
 ),
 
--- ISSUE: Multiple window functions for different periods
 with_rolling_returns as (
     select
         *,

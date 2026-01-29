@@ -2,9 +2,6 @@
 -- Model: fact_fund_summary
 -- Description: Fund-level summary metrics
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Based on already-aggregated data
--- 2. Could push more logic upstream
 
 with fund_rollup as (
     select * from {{ ref('int_fund_rollup') }}
@@ -40,7 +37,6 @@ final as (
         weighted_sharpe_ratio,
         worst_drawdown,
         total_var_95,
-        -- ISSUE: Calculated fields
         case
             when weighted_return_1y >= 0.15 then 'HIGH'
             when weighted_return_1y >= 0.08 then 'MEDIUM'

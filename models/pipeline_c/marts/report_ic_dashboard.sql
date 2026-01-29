@@ -2,11 +2,6 @@
 -- Model: report_ic_dashboard
 -- Description: Investment Committee dashboard report
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Combines multiple fact tables
--- 2. Re-aggregates aggregated data
--- 3. Complex pivoting logic
--- 4. Multiple CTEs that could be simplified
 
 with portfolio_performance as (
     select * from {{ ref('fact_portfolio_performance') }}
@@ -20,7 +15,6 @@ position_snapshot as (
     select * from {{ ref('fact_position_snapshot') }}
 ),
 
--- ISSUE: Get latest performance per portfolio
 latest_portfolio_perf as (
     select *
     from (
@@ -32,10 +26,9 @@ latest_portfolio_perf as (
             ) as rn
         from portfolio_performance
     )
-    where rn = 1  -- ISSUE: Should use QUALIFY
+    where rn = 1
 ),
 
--- ISSUE: Get latest positions per portfolio
 latest_positions as (
     select *
     from (
@@ -50,7 +43,6 @@ latest_positions as (
     where rn = 1
 ),
 
--- ISSUE: Re-aggregate positions for portfolio summary
 position_summary as (
     select
         portfolio_id,
@@ -64,7 +56,6 @@ position_summary as (
     group by 1
 ),
 
--- ISSUE: Sector concentration
 sector_concentration as (
     select
         portfolio_id,
@@ -82,7 +73,6 @@ sector_concentration as (
     group by 1
 ),
 
--- ISSUE: Combine all metrics
 dashboard_data as (
     select
         lpp.portfolio_id,
@@ -134,7 +124,6 @@ dashboard_data as (
         on lpp.portfolio_id = sc.portfolio_id
 ),
 
--- ISSUE: Final scoring/ranking
 final as (
     select
         *,

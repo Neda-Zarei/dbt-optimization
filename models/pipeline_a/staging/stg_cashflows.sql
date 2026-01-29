@@ -2,13 +2,9 @@
 -- Model: stg_cashflows
 -- Description: Staging model for raw cashflow data
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Unnecessary DISTINCT (source already unique)
--- 2. Late filtering (should push date filter upstream)
--- 3. Non-optimal date casting
 
 with source as (
-    select distinct  -- ISSUE: Unnecessary DISTINCT, source has unique constraint
+    select distinct
         cashflow_id,
         portfolio_id,
         cashflow_type,
@@ -20,7 +16,6 @@ with source as (
     from {{ source('raw', 'cashflows') }}
 ),
 
--- ISSUE: Heavy transformation before filtering
 converted as (
     select
         cashflow_id,
@@ -34,7 +29,6 @@ converted as (
     from source
 ),
 
--- ISSUE: Filter applied after transformation, should be earlier
 filtered as (
     select *
     from converted

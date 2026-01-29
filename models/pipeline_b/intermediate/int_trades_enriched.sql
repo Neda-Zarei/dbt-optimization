@@ -2,10 +2,6 @@
 -- Model: int_trades_enriched
 -- Description: Intermediate model enriching trades with security and price data
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Multiple heavy joins done row-by-row
--- 2. Price lookup repeated for every trade
--- 3. Could pre-aggregate before joining
 
 with trades as (
     select * from {{ ref('stg_trades') }}
@@ -23,7 +19,6 @@ brokers as (
     select * from {{ ref('stg_brokers') }}
 ),
 
--- ISSUE: Heavy multi-way join before any aggregation
 enriched as (
     select
         t.trade_id,
@@ -64,7 +59,6 @@ enriched as (
         mp.volatility_20d,
         mp.trend_signal,
         mp.volume_signal,
-        -- ISSUE: These calculations done per row
         case
             when mp.close_price > 0
             then (t.price - mp.close_price) / mp.close_price * 100

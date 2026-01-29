@@ -2,16 +2,11 @@
 -- Model: int_sector_attribution
 -- Description: Aggregate attribution to sector level
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Re-aggregation of position data
--- 2. Complex grouping logic
--- 3. Could be combined with position attribution
 
 with position_attribution as (
     select * from {{ ref('int_position_attribution') }}
 ),
 
--- ISSUE: Aggregation that could be pushed upstream
 sector_daily as (
     select
         portfolio_id,
@@ -28,7 +23,6 @@ sector_daily as (
     group by 1, 2, 3
 ),
 
--- ISSUE: Window functions for rolling metrics
 with_rolling as (
     select
         *,

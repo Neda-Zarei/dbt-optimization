@@ -2,10 +2,6 @@
 -- Model: int_fund_rollup
 -- Description: Roll up portfolio metrics to fund level
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Recursive-like hierarchy traversal
--- 2. Multiple aggregation levels
--- 3. Heavy joins
 
 with fund_hierarchy as (
     select * from {{ ref('stg_fund_hierarchy') }}
@@ -42,10 +38,9 @@ latest_metrics as (
             row_number() over (partition by portfolio_id order by valuation_date desc) as rn
         from risk_metrics
     )
-    where rn = 1  -- ISSUE: Should use QUALIFY
+    where rn = 1
 ),
 
--- ISSUE: Join and aggregate
 fund_aggregated as (
     select
         pfm.fund_id,

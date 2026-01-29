@@ -2,9 +2,6 @@
 -- Model: stg_valuations
 -- Description: Portfolio valuation data (NAV, etc.)
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Deduplication via subquery
--- 2. Heavy calculations before filtering
 
 with source as (
     select
@@ -25,7 +22,6 @@ with source as (
     from {{ source('raw', 'valuations') }}
 ),
 
--- ISSUE: Deduplication using subquery
 deduplicated as (
     select *
     from (
@@ -40,7 +36,6 @@ deduplicated as (
     where rn = 1
 ),
 
--- ISSUE: Filter applied after deduplication
 filtered as (
     select
         valuation_id,

@@ -2,10 +2,6 @@
 -- Model: int_position_attribution
 -- Description: Attribution analysis at position level
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Heavy multi-way join
--- 2. Complex attribution calculations
--- 3. Multiple window functions
 
 with positions as (
     select * from {{ ref('stg_positions_daily') }}
@@ -19,7 +15,6 @@ market_prices as (
     select * from {{ ref('stg_market_prices') }}
 ),
 
--- ISSUE: Heavy 3-way join
 enriched_positions as (
     select
         p.portfolio_id,
@@ -46,7 +41,6 @@ enriched_positions as (
         and p.position_date = mp.price_date
 ),
 
--- ISSUE: Window functions for prior day weight
 with_prior_weight as (
     select
         *,
@@ -61,7 +55,6 @@ with_prior_weight as (
     from enriched_positions
 ),
 
--- ISSUE: Attribution calculations
 with_attribution as (
     select
         *,

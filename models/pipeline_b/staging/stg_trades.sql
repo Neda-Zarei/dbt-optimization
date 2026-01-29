@@ -2,10 +2,6 @@
 -- Model: stg_trades
 -- Description: Staging model for trade transactions
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Complex CASE statements that repeat
--- 2. Multiple CTEs doing similar transformations
--- 3. Unnecessary string operations
 
 with source as (
     select
@@ -28,11 +24,9 @@ with source as (
     from {{ source('raw', 'trades') }}
 ),
 
--- ISSUE: Repeated CASE statements for trade categorization
 categorized as (
     select
         *,
-        -- ISSUE: This logic is repeated in multiple models
         case
             when trade_type in ('BUY', 'COVER') then 'PURCHASE'
             when trade_type in ('SELL', 'SHORT') then 'SALE'
@@ -45,13 +39,11 @@ categorized as (
             when abs(net_amount) >= 100000 then 'SMALL'
             else 'MICRO'
         end as trade_size_bucket,
-        -- ISSUE: Redundant string manipulation
         upper(trim(trade_type)) as trade_type_clean,
         upper(trim(currency)) as currency_clean
     from source
 ),
 
--- ISSUE: Another pass just for date calculations
 with_dates as (
     select
         *,
@@ -64,7 +56,6 @@ with_dates as (
     from categorized
 ),
 
--- ISSUE: Late filtering
 filtered as (
     select *
     from with_dates

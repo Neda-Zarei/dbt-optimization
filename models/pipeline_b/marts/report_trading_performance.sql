@@ -2,10 +2,6 @@
 -- Model: report_trading_performance
 -- Description: Trading performance report for IC dashboard
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Re-aggregates fact data that could be pre-computed
--- 2. Complex window functions repeated from other models
--- 3. Multiple CTEs that could be consolidated
 
 with trades as (
     select * from {{ ref('fact_trade_summary') }}
@@ -15,7 +11,6 @@ positions as (
     select * from {{ ref('fact_portfolio_positions') }}
 ),
 
--- ISSUE: Re-aggregating trade data by portfolio/month
 trade_metrics as (
     select
         portfolio_id,
@@ -36,7 +31,6 @@ trade_metrics as (
     group by 1,2,3,4,5,6
 ),
 
--- ISSUE: Aggregating positions separately
 position_metrics as (
     select
         portfolio_id,
@@ -49,7 +43,6 @@ position_metrics as (
     group by 1
 ),
 
--- ISSUE: Window functions for running totals (repeated pattern)
 with_running_totals as (
     select
         tm.*,
@@ -63,7 +56,6 @@ with_running_totals as (
             order by tm.trade_year, tm.trade_month
             rows between unbounded preceding and current row
         ) as cumulative_invested,
-        -- ISSUE: Multiple LAG functions
         lag(total_realized_pnl, 1) over (
             partition by tm.portfolio_id
             order by tm.trade_year, tm.trade_month
@@ -75,7 +67,6 @@ with_running_totals as (
     from trade_metrics tm
 ),
 
--- ISSUE: Final join adds more complexity
 final as (
     select
         wrt.*,

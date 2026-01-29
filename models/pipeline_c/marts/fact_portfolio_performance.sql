@@ -5,12 +5,6 @@
 --   - Pipeline A: fact_cashflow_summary (for cashflow context)
 --   - Pipeline B: fact_trade_summary, fact_portfolio_positions (for trading/position context)
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Multiple self-joins for period comparisons
--- 2. Repeated window functions with same partitions
--- 3. Complex CASE statements repeated multiple times
--- 4. Correlated subqueries
--- 5. Late filtering and unnecessary full table scans
 
 with portfolio_vs_benchmark as (
     select * from {{ ref('int_portfolio_vs_benchmark') }}
@@ -75,7 +69,6 @@ portfolio_position_totals as (
     group by portfolio_id
 ),
 
--- ISSUE: Another join when data could flow from upstream
 combined as (
     select
         pvb.portfolio_id,
@@ -120,23 +113,17 @@ combined as (
         and pvb.valuation_date = rm.valuation_date
 ),
 
--- ISSUE: Self-join for prior period comparisons (should use LAG)
 with_prior_periods as (
     select
         c.*,
-        -- ISSUE: Self-join for 1 day ago
         c1d.nav_usd as nav_1d_ago,
         c1d.portfolio_cumulative_return as return_1d_ago,
-        -- ISSUE: Self-join for 1 week ago
         c1w.nav_usd as nav_1w_ago,
         c1w.portfolio_cumulative_return as return_1w_ago,
-        -- ISSUE: Self-join for 1 month ago
         c1m.nav_usd as nav_1m_ago,
         c1m.portfolio_cumulative_return as return_1m_ago,
-        -- ISSUE: Self-join for 3 months ago
         c3m.nav_usd as nav_3m_ago,
         c3m.portfolio_cumulative_return as return_3m_ago,
-        -- ISSUE: Self-join for 1 year ago
         c1y.nav_usd as nav_1y_ago,
         c1y.portfolio_cumulative_return as return_1y_ago
     from combined c
@@ -157,11 +144,9 @@ with_prior_periods as (
         and c1y.valuation_date = dateadd(year, -1, c.valuation_date)
 ),
 
--- ISSUE: Multiple window functions with repeated partitions
 with_rankings as (
     select
         wpp.*,
-        -- ISSUE: Multiple ROW_NUMBER with same partition
         row_number() over (
             partition by wpp.portfolio_id
             order by wpp.portfolio_cumulative_return desc
@@ -174,12 +159,10 @@ with_rankings as (
             partition by wpp.portfolio_id
             order by wpp.sharpe_ratio desc nulls last
         ) as best_sharpe_rank,
-        -- ISSUE: DENSE_RANK with same partition
         dense_rank() over (
             partition by wpp.portfolio_id
             order by wpp.nav_usd desc
         ) as nav_size_rank,
-        -- ISSUE: More window calculations
         avg(wpp.portfolio_daily_return) over (
             partition by wpp.portfolio_id
             order by wpp.valuation_date
@@ -203,11 +186,9 @@ with_rankings as (
     from with_prior_periods wpp
 ),
 
--- ISSUE: Complex derived metrics with repeated CASE statements
 with_derived_metrics as (
     select
         wr.*,
-        -- ISSUE: Repeated complex CASE for performance classification
         case
             when wr.portfolio_cumulative_return >= 0.50 then 'EXCEPTIONAL'
             when wr.portfolio_cumulative_return >= 0.30 then 'EXCELLENT'
@@ -218,7 +199,6 @@ with_derived_metrics as (
             when wr.portfolio_cumulative_return >= -0.15 then 'VERY_POOR'
             else 'UNACCEPTABLE'
         end as performance_rating,
-        -- ISSUE: Same CASE for risk classification
         case
             when wr.sharpe_ratio >= 3.0 then 'EXCEPTIONAL'
             when wr.sharpe_ratio >= 2.0 then 'EXCELLENT'
@@ -228,7 +208,6 @@ with_derived_metrics as (
             when wr.sharpe_ratio >= 0.0 then 'POOR'
             else 'VERY_POOR'
         end as risk_adjusted_rating,
-        -- ISSUE: Complex calculation repeated
         case
             when wr.nav_1m_ago is not null and wr.nav_1m_ago > 0
             then (wr.nav_usd - wr.nav_1m_ago) / wr.nav_1m_ago
@@ -244,13 +223,11 @@ with_derived_metrics as (
             then (wr.nav_usd - wr.nav_1y_ago) / wr.nav_1y_ago
             else null
         end as nav_change_1y_pct,
-        -- ISSUE: Momentum indicators with repeated logic
         case
             when wr.rolling_20d_avg_return > wr.rolling_60d_avg_return then 'POSITIVE_MOMENTUM'
             when wr.rolling_20d_avg_return < wr.rolling_60d_avg_return then 'NEGATIVE_MOMENTUM'
             else 'NEUTRAL_MOMENTUM'
         end as momentum_signal,
-        -- ISSUE: Volatility regime classification
         case
             when wr.rolling_20d_volatility > wr.rolling_60d_volatility * 1.5 then 'HIGH_VOLATILITY'
             when wr.rolling_20d_volatility > wr.rolling_60d_volatility * 1.2 then 'ELEVATED_VOLATILITY'
@@ -260,7 +237,6 @@ with_derived_metrics as (
     from with_rankings wr
 ),
 
--- ISSUE: Separate peer aggregation CTEs (should use window functions with partition by portfolio_type)
 peer_return_aggs as (
     select
         p2.portfolio_type,
@@ -299,7 +275,6 @@ with_peer_comparison as (
         and wdm.valuation_date = psa.valuation_date
 ),
 
--- ISSUE: Portfolio attributes added last
 final as (
     select
         {{ dbt_utils.generate_surrogate_key(['wpc.portfolio_id', 'wpc.valuation_date']) }} as performance_key,
@@ -307,7 +282,6 @@ final as (
         p.portfolio_type,
         p.fund_id,
         wpc.*,
-        -- ISSUE: Date dimensions recalculated (should be in dim table)
         extract(year from wpc.valuation_date) as valuation_year,
         extract(month from wpc.valuation_date) as valuation_month,
         extract(quarter from wpc.valuation_date) as valuation_quarter,
@@ -316,10 +290,8 @@ final as (
         date_trunc('month', wpc.valuation_date) as valuation_month_start,
         date_trunc('quarter', wpc.valuation_date) as valuation_quarter_start,
         date_trunc('year', wpc.valuation_date) as valuation_year_start,
-        -- ISSUE: String concatenations (slow)
         concat(p.portfolio_name, ' - ', wpc.valuation_date::varchar) as display_name,
         concat('Q', extract(quarter from wpc.valuation_date), ' ', extract(year from wpc.valuation_date)) as quarter_label,
-        -- ISSUE: Complex derived field
         case
             when wpc.portfolio_cumulative_return > wpc.peer_avg_return then 'OUTPERFORMING'
             when wpc.portfolio_cumulative_return < wpc.peer_avg_return then 'UNDERPERFORMING'

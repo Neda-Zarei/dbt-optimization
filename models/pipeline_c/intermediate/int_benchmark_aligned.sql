@@ -2,9 +2,6 @@
 -- Model: int_benchmark_aligned
 -- Description: Align benchmark returns with portfolio dates for comparison
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Heavy join between portfolios and benchmarks
--- 2. Could pre-filter benchmarks
 
 with portfolio_dates as (
     select distinct
@@ -21,7 +18,6 @@ benchmark_returns as (
     select * from {{ ref('stg_benchmark_returns') }}
 ),
 
--- ISSUE: Cross-join like pattern (portfolio dates x benchmarks)
 aligned as (
     select
         pd.portfolio_id,

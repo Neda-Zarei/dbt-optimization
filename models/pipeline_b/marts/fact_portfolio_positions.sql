@@ -3,11 +3,6 @@
 -- Description: Current position snapshot by portfolio and security
 -- DEPENDENCY: Uses fact_cashflow_summary from Pipeline A for portfolio cash context
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Gets latest position via subquery (should use QUALIFY)
--- 2. Self-joins for historical position lookups
--- 3. Correlated subqueries for portfolio-level aggregations
--- 4. Repeated window functions
 
 with trade_pnl as (
     select * from {{ ref('int_trade_pnl') }}
@@ -43,7 +38,6 @@ latest_positions as (
     where rn = 1
 ),
 
--- ISSUE: Self-join to get position 30 days ago
 positions_30d_ago as (
     select
         portfolio_id,
@@ -63,7 +57,6 @@ positions_30d_ago as (
     where rn = 1
 ),
 
--- ISSUE: Self-join to get position 90 days ago
 positions_90d_ago as (
     select
         portfolio_id,
@@ -96,10 +89,9 @@ market_prices as (
             row_number() over (partition by security_id order by price_date desc) as rn
         from {{ ref('stg_market_prices') }}
     )
-    where rn = 1  -- ISSUE: Again, should use QUALIFY
+    where rn = 1
 ),
 
--- ISSUE: Get historical prices for comparison
 market_prices_30d_ago as (
     select
         security_id,
@@ -115,7 +107,6 @@ market_prices_30d_ago as (
     where rn = 1
 ),
 
--- ISSUE: Join all the position snapshots together
 enriched_positions as (
     select
         lp.*,
@@ -145,11 +136,9 @@ enriched_positions as (
     where lp.running_position != 0
 ),
 
--- ISSUE: Window functions for portfolio-level context
 with_portfolio_context as (
     select
         ep.*,
-        -- ISSUE: Repeated partition by portfolio_id
         sum(ep.running_position * ep.current_price) over (
             partition by ep.portfolio_id
         ) as portfolio_total_market_value,
@@ -159,7 +148,6 @@ with_portfolio_context as (
         count(*) over (
             partition by ep.portfolio_id
         ) as portfolio_position_count,
-        -- ISSUE: Rankings
         row_number() over (
             partition by ep.portfolio_id
             order by (ep.running_position * ep.current_price) desc
@@ -171,7 +159,6 @@ with_portfolio_context as (
     from enriched_positions ep
 ),
 
--- ISSUE: Separate aggregation for sector context (should use window functions)
 sector_aggs as (
     select
         portfolio_id,
@@ -193,7 +180,6 @@ with_sector_context as (
         and wpc.sector = sa.sector
 ),
 
--- ISSUE: Complex calculations in final select
 final as (
     select
         {{ dbt_utils.generate_surrogate_key(['wsc.portfolio_id', 'wsc.security_id']) }} as position_key,
@@ -211,7 +197,6 @@ final as (
         wsc.running_position * wsc.avg_cost_basis as cost_basis_value,
         wsc.running_position * wsc.current_price as market_value,
         (wsc.running_position * wsc.current_price) - (wsc.running_position * wsc.avg_cost_basis) as unrealized_pnl,
-        -- ISSUE: Repeated division logic
         case
             when wsc.avg_cost_basis > 0
             then ((wsc.current_price - wsc.avg_cost_basis) / wsc.avg_cost_basis) * 100
@@ -221,7 +206,6 @@ final as (
         wsc.portfolio_total_market_value,
         wsc.portfolio_total_cost_basis,
         wsc.portfolio_position_count,
-        -- ISSUE: Weight calculation (repeated division)
         case
             when wsc.portfolio_total_market_value > 0
             then ((wsc.running_position * wsc.current_price) / wsc.portfolio_total_market_value) * 100
@@ -254,7 +238,6 @@ final as (
         -- Rankings
         wsc.position_size_rank,
         wsc.position_return_rank,
-        -- ISSUE: Complex classification
         case
             when ((wsc.running_position * wsc.current_price) / nullif(wsc.portfolio_total_market_value, 0)) > 0.10 then 'CONCENTRATED'
             when ((wsc.running_position * wsc.current_price) / nullif(wsc.portfolio_total_market_value, 0)) > 0.05 then 'SIGNIFICANT'

@@ -2,16 +2,11 @@
 -- Model: report_monthly_cashflows
 -- Description: LP reporting view for monthly cashflow analysis
 --
--- ISSUES FOR ARTEMIS TO OPTIMIZE:
--- 1. Re-aggregates data that's already in fact table
--- 2. Repeated window functions
--- 3. Suboptimal pivot pattern
 
 with fact_data as (
     select * from {{ ref('fact_cashflow_summary') }}
 ),
 
--- ISSUE: Re-aggregating already aggregated data
 monthly_totals as (
     select
         portfolio_id,
@@ -31,7 +26,6 @@ monthly_totals as (
     group by 1,2,3,4,5,6,7
 ),
 
--- ISSUE: Window functions recalculated multiple times
 with_running_totals as (
     select
         *,
@@ -61,7 +55,6 @@ with_running_totals as (
     from monthly_totals
 ),
 
--- ISSUE: Calculated columns that could be simplified
 final as (
     select
         *,
