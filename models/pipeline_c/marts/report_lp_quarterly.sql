@@ -176,32 +176,28 @@ with_window_calcs as (
     from with_self_joins wsj
 ),
 
--- ISSUE: Correlated subqueries for fund-level aggregations (very slow)
+-- ISSUE: Separate fund-level aggregation (should use window functions)
+fund_quarterly_aggs as (
+    select
+        fund_id,
+        valuation_date as quarter_end,
+        sum(nav_usd) as fund_total_nav,
+        avg(portfolio_return_3m) as fund_avg_quarterly_return,
+        count(distinct portfolio_id) as fund_portfolio_count
+    from quarter_end_perf
+    group by 1, 2
+),
+
 with_fund_context as (
     select
         wwc.*,
-        -- ISSUE: Correlated subquery for fund total NAV
-        (
-            select sum(qep2.nav_usd)
-            from quarter_end_perf qep2
-            where qep2.fund_id = wwc.fund_id
-            and qep2.quarter_end = wwc.quarter_end
-        ) as fund_total_nav,
-        -- ISSUE: Another correlated subquery for fund average return
-        (
-            select avg(qep2.portfolio_return_3m)
-            from quarter_end_perf qep2
-            where qep2.fund_id = wwc.fund_id
-            and qep2.quarter_end = wwc.quarter_end
-        ) as fund_avg_quarterly_return,
-        -- ISSUE: Count of portfolios in fund (correlated)
-        (
-            select count(distinct qep2.portfolio_id)
-            from quarter_end_perf qep2
-            where qep2.fund_id = wwc.fund_id
-            and qep2.quarter_end = wwc.quarter_end
-        ) as fund_portfolio_count
+        fqa.fund_total_nav,
+        fqa.fund_avg_quarterly_return,
+        fqa.fund_portfolio_count
     from with_window_calcs wwc
+    left join fund_quarterly_aggs fqa
+        on wwc.fund_id = fqa.fund_id
+        and wwc.quarter_end = fqa.quarter_end
 ),
 
 -- ISSUE: Complex derived metrics with repeated CASE statements

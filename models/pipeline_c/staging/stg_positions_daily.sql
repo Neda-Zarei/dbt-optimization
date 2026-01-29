@@ -14,16 +14,16 @@ with source as (
         security_id,
         position_date,
         quantity,
-        market_value_local,
+        cost_basis_price,
+        cost_basis_value,
+        market_price,
+        market_value,
         market_value_usd,
-        cost_basis_local,
-        cost_basis_usd,
-        unrealized_pnl_local,
-        unrealized_pnl_usd,
+        unrealized_pnl,
+        unrealized_pnl_pct,
         weight_pct,
-        currency,
-        fx_rate,
-        created_at
+        created_at,
+        updated_at
     from {{ source('raw', 'positions_daily') }}
 ),
 
@@ -35,16 +35,16 @@ transformed as (
         security_id,
         cast(position_date as date) as position_date,
         cast(quantity as decimal(18,6)) as quantity,
-        cast(market_value_local as decimal(18,2)) as market_value_local,
+        cast(cost_basis_price as decimal(18,4)) as cost_basis_price,
+        cast(cost_basis_value as decimal(18,2)) as cost_basis_value,
+        cast(market_price as decimal(18,4)) as market_price,
+        cast(market_value as decimal(18,2)) as market_value,
         cast(market_value_usd as decimal(18,2)) as market_value_usd,
-        cast(cost_basis_local as decimal(18,2)) as cost_basis_local,
-        cast(cost_basis_usd as decimal(18,2)) as cost_basis_usd,
-        cast(unrealized_pnl_local as decimal(18,2)) as unrealized_pnl_local,
-        cast(unrealized_pnl_usd as decimal(18,2)) as unrealized_pnl_usd,
+        cast(unrealized_pnl as decimal(18,2)) as unrealized_pnl,
+        cast(unrealized_pnl_pct as decimal(10,4)) as unrealized_pnl_pct,
         cast(weight_pct as decimal(10,6)) as weight_pct,
-        upper(currency) as currency,
-        cast(fx_rate as decimal(18,8)) as fx_rate,
-        created_at
+        created_at,
+        updated_at
     from source
 ),
 

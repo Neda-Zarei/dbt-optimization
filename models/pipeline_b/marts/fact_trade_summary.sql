@@ -55,47 +55,41 @@ enriched as (
 ),
 
 -- ISSUE: Self-joins for prior trade comparisons (should use LAG)
+-- Pre-compute trade sequence for self-join lookups
+trade_sequences as (
+    select
+        *,
+        row_number() over (
+            partition by portfolio_id, security_id
+            order by trade_date, trade_id
+        ) as trade_seq
+    from enriched
+),
+
 with_prior_trades as (
     select
-        e.*,
-        -- ISSUE: Self-join for prior trade same security
-        pt1.execution_price as prior_trade_price,
-        pt1.trade_date as prior_trade_date,
-        pt1.quantity as prior_trade_quantity,
-        -- ISSUE: Self-join for 5 trades ago
-        pt5.execution_price as price_5_trades_ago,
-        -- ISSUE: Self-join for 10 trades ago
-        pt10.execution_price as price_10_trades_ago
-    from enriched e
-    left join enriched pt1
-        on e.portfolio_id = pt1.portfolio_id
-        and e.security_id = pt1.security_id
-        and pt1.trade_date < e.trade_date
-        and pt1.trade_date = (
-            select max(pt_sub.trade_date)
-            from enriched pt_sub
-            where pt_sub.portfolio_id = e.portfolio_id
-            and pt_sub.security_id = e.security_id
-            and pt_sub.trade_date < e.trade_date
-        )
-    left join lateral (
-        select execution_price
-        from enriched pt_lateral
-        where pt_lateral.portfolio_id = e.portfolio_id
-        and pt_lateral.security_id = e.security_id
-        and pt_lateral.trade_date < e.trade_date
-        order by pt_lateral.trade_date desc
-        limit 1 offset 4
-    ) pt5 on true
-    left join lateral (
-        select execution_price
-        from enriched pt_lateral
-        where pt_lateral.portfolio_id = e.portfolio_id
-        and pt_lateral.security_id = e.security_id
-        and pt_lateral.trade_date < e.trade_date
-        order by pt_lateral.trade_date desc
-        limit 1 offset 9
-    ) pt10 on true
+        ts.*,
+        -- ISSUE: Self-join for prior trade same security (should use LAG)
+        ts_prior.execution_price as prior_trade_price,
+        ts_prior.trade_date as prior_trade_date,
+        ts_prior.quantity as prior_trade_quantity,
+        -- ISSUE: Self-join for 5 trades ago (should use LAG offset)
+        ts_5.execution_price as price_5_trades_ago,
+        -- ISSUE: Self-join for 10 trades ago (should use LAG offset)
+        ts_10.execution_price as price_10_trades_ago
+    from trade_sequences ts
+    left join trade_sequences ts_prior
+        on ts.portfolio_id = ts_prior.portfolio_id
+        and ts.security_id = ts_prior.security_id
+        and ts_prior.trade_seq = ts.trade_seq - 1
+    left join trade_sequences ts_5
+        on ts.portfolio_id = ts_5.portfolio_id
+        and ts.security_id = ts_5.security_id
+        and ts_5.trade_seq = ts.trade_seq - 5
+    left join trade_sequences ts_10
+        on ts.portfolio_id = ts_10.portfolio_id
+        and ts.security_id = ts_10.security_id
+        and ts_10.trade_seq = ts.trade_seq - 10
 ),
 
 -- ISSUE: Multiple window functions with repeated partitions
@@ -153,35 +147,53 @@ with_window_calcs as (
     from with_prior_trades wpt
 ),
 
--- ISSUE: Correlated subqueries for security-level context (very slow)
+-- ISSUE: Separate CTE for running trade stats (should be combined with window calcs above)
+security_trade_aggs as (
+    select
+        portfolio_id,
+        security_id,
+        trade_date,
+        trade_id,
+        -- ISSUE: These window functions duplicate the partition from with_window_calcs
+        count(*) over (
+            partition by portfolio_id, security_id
+            order by trade_date, trade_id
+            rows between unbounded preceding and current row
+        ) as total_portfolio_trades_this_security,
+        avg(execution_price) over (
+            partition by portfolio_id, security_id
+            order by trade_date, trade_id
+            rows between unbounded preceding and current row
+        ) as avg_portfolio_price_this_security
+    from enriched
+),
+
+-- ISSUE: Separate aggregation for fund-level volume (should be combined upstream)
+fund_daily_volume as (
+    select
+        fund_id,
+        security_id,
+        trade_date,
+        sum(abs(net_amount)) as fund_total_volume_same_security_same_day
+    from enriched
+    group by 1, 2, 3
+),
+
 with_security_context as (
     select
         wwc.*,
-        -- ISSUE: Correlated subquery for total portfolio trades on this security
-        (
-            select count(*)
-            from enriched e2
-            where e2.portfolio_id = wwc.portfolio_id
-            and e2.security_id = wwc.security_id
-            and e2.trade_date <= wwc.trade_date
-        ) as total_portfolio_trades_this_security,
-        -- ISSUE: Another correlated subquery for average portfolio price
-        (
-            select avg(e2.execution_price)
-            from enriched e2
-            where e2.portfolio_id = wwc.portfolio_id
-            and e2.security_id = wwc.security_id
-            and e2.trade_date <= wwc.trade_date
-        ) as avg_portfolio_price_this_security,
-        -- ISSUE: Fund-level aggregation (correlated)
-        (
-            select sum(abs(e2.net_amount))
-            from enriched e2
-            where e2.fund_id = wwc.fund_id
-            and e2.security_id = wwc.security_id
-            and e2.trade_date = wwc.trade_date
-        ) as fund_total_volume_same_security_same_day
+        sta.total_portfolio_trades_this_security,
+        sta.avg_portfolio_price_this_security,
+        fdv.fund_total_volume_same_security_same_day
     from with_window_calcs wwc
+    left join security_trade_aggs sta
+        on wwc.portfolio_id = sta.portfolio_id
+        and wwc.security_id = sta.security_id
+        and wwc.trade_id = sta.trade_id
+    left join fund_daily_volume fdv
+        on wwc.fund_id = fdv.fund_id
+        and wwc.security_id = fdv.security_id
+        and wwc.trade_date = fdv.trade_date
 ),
 
 -- ISSUE: Complex derived metrics with repeated CASE statements

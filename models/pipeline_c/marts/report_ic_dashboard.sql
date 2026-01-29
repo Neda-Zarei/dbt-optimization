@@ -56,7 +56,6 @@ position_summary as (
         portfolio_id,
         count(distinct security_id) as total_positions,
         count(distinct sector) as sector_count,
-        count(distinct country) as country_count,
         sum(market_value_usd) as total_market_value,
         max(weight_pct) as max_position_weight,
         -- Concentration metrics
@@ -112,7 +111,6 @@ dashboard_data as (
         -- Positions
         ps.total_positions,
         ps.sector_count,
-        ps.country_count,
         ps.max_position_weight,
         ps.positions_over_5pct,
         sc.top_sectors,

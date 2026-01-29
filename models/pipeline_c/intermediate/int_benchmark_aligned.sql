@@ -27,7 +27,7 @@ aligned as (
         pd.portfolio_id,
         pd.valuation_date,
         pb.benchmark_id,
-        pb.benchmark_weight,
+        1.0 as benchmark_weight,  -- Default weight since not in source
         pb.is_primary,
         br.daily_return as benchmark_daily_return,
         br.cumulative_return as benchmark_cumulative_return,
@@ -38,8 +38,8 @@ aligned as (
     from portfolio_dates pd
     inner join portfolio_benchmarks pb
         on pd.portfolio_id = pb.portfolio_id
-        and pd.valuation_date >= pb.effective_from
-        and (pb.effective_to is null or pd.valuation_date <= pb.effective_to)
+        and pd.valuation_date >= pb.start_date
+        and (pb.end_date is null or pd.valuation_date <= pb.end_date)
     left join benchmark_returns br
         on pb.benchmark_id = br.benchmark_id
         and pd.valuation_date = br.return_date

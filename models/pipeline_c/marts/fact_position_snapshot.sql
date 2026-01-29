@@ -29,7 +29,6 @@ final as (
         pa.asset_class,
         pa.sector,
         pa.industry,
-        pa.country,
         pa.quantity,
         pa.market_value_usd,
         pa.weight_pct,

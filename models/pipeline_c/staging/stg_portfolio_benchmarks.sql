@@ -6,21 +6,21 @@ with source as (
     select
         portfolio_id,
         benchmark_id,
-        benchmark_weight,
-        effective_from,
-        effective_to,
         is_primary,
-        created_at
+        start_date,
+        end_date,
+        created_at,
+        updated_at
     from {{ source('raw', 'portfolio_benchmarks') }}
 )
 
 select
     portfolio_id,
     benchmark_id,
-    cast(benchmark_weight as decimal(5,4)) as benchmark_weight,
-    cast(effective_from as date) as effective_from,
-    cast(effective_to as date) as effective_to,
     is_primary,
-    created_at
+    cast(start_date as date) as start_date,
+    cast(end_date as date) as end_date,
+    created_at,
+    updated_at
 from source
-where effective_to is null or effective_to >= current_date()
+where end_date is null or end_date >= current_date()

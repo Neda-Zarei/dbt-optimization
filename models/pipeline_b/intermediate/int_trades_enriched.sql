@@ -52,7 +52,6 @@ enriched as (
         s.asset_class,
         s.sector,
         s.industry,
-        s.country as security_country,
         -- Broker attributes
         b.broker_name,
         b.broker_type,

@@ -15,7 +15,6 @@ with source as (
         high_price,
         low_price,
         close_price,
-        adjusted_close,
         volume,
         created_at
     from {{ source('raw', 'market_prices') }}
@@ -31,7 +30,6 @@ with_prior_day as (
         curr.high_price,
         curr.low_price,
         curr.close_price,
-        curr.adjusted_close,
         curr.volume,
         prev.close_price as prior_close,
         prev.volume as prior_volume

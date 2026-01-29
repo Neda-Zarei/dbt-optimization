@@ -33,7 +33,6 @@ enriched_positions as (
         s.asset_class,
         s.sector,
         s.industry,
-        s.country,
         mp.daily_return as security_return,
         mp.close_price,
         mp.ma_20,

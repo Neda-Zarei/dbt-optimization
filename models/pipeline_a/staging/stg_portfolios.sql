@@ -14,7 +14,7 @@ with source as (
         fund_id,
         inception_date,
         status,
-        aum_usd,
+        currency,
         created_at,
         updated_at,
         row_number() over (
@@ -33,7 +33,7 @@ deduplicated as (
         fund_id,
         inception_date,
         status,
-        aum_usd,
+        currency,
         created_at,
         updated_at
     from source

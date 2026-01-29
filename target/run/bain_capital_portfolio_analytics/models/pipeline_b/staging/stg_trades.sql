@@ -19,6 +19,7 @@ with source as (
         trade_id,
         portfolio_id,
         security_id,
+        broker_id,
         trade_date,
         settlement_date,
         trade_type,
@@ -29,10 +30,6 @@ with source as (
         fees,
         net_amount,
         currency,
-        counterparty_id,
-        broker_id,
-        trader_id,
-        trade_status,
         created_at,
         updated_at
     from DBT_DEMO.DEV.trades
@@ -57,8 +54,7 @@ categorized as (
         end as trade_size_bucket,
         -- ISSUE: Redundant string manipulation
         upper(trim(trade_type)) as trade_type_clean,
-        upper(trim(currency)) as currency_clean,
-        upper(trim(trade_status)) as status_clean
+        upper(trim(currency)) as currency_clean
     from source
 ),
 
@@ -80,7 +76,6 @@ filtered as (
     select *
     from with_dates
     where trade_date >= '2020-01-01'
-      and trade_status != 'CANCELLED'
 )
 
 select * from filtered

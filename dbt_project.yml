@@ -39,7 +39,7 @@ models:
       staging:
         +materialized: view
       intermediate:
-        +materialized: ephemeral
+        +materialized: view
       marts:
         +materialized: table
 
@@ -52,5 +52,3 @@ models:
         +materialized: view
       marts:
         +materialized: table
-        +post-hook:
-          - "ANALYZE TABLE {{ this }}"

@@ -1,6 +1,9 @@
 -- Pipeline C: Complex Portfolio Analytics
 -- Model: fact_portfolio_performance
 -- Description: Main performance fact table
+-- DEPENDENCIES:
+--   - Pipeline A: fact_cashflow_summary (for cashflow context)
+--   - Pipeline B: fact_trade_summary, fact_portfolio_positions (for trading/position context)
 --
 -- ISSUES FOR ARTEMIS TO OPTIMIZE:
 -- 1. Multiple self-joins for period comparisons
@@ -19,6 +22,57 @@ risk_metrics as (
 
 portfolios as (
     select * from {{ ref('stg_portfolios') }}
+),
+
+-- DEPENDENCY ON PIPELINE A: Cashflow summary for capital deployment context
+cashflow_summary as (
+    select * from {{ ref('fact_cashflow_summary') }}
+),
+
+-- Aggregate cashflows to portfolio level
+portfolio_cashflow_totals as (
+    select
+        portfolio_id,
+        sum(case when cashflow_type = 'CONTRIBUTION' then cumulative_total else 0 end) as total_contributions,
+        sum(case when cashflow_type = 'DISTRIBUTION' then abs(cumulative_total) else 0 end) as total_distributions,
+        sum(cumulative_total) as net_cashflow
+    from cashflow_summary
+    group by portfolio_id
+),
+
+-- DEPENDENCY ON PIPELINE B: Trade summary for trading activity context
+trade_summary as (
+    select * from {{ ref('fact_trade_summary') }}
+),
+
+-- Aggregate trades to portfolio/date level
+portfolio_trade_activity as (
+    select
+        portfolio_id,
+        trade_month_start as activity_month,
+        count(*) as trade_count,
+        sum(case when trade_category = 'PURCHASE' then abs(net_amount) else 0 end) as total_purchases,
+        sum(case when trade_category = 'SALE' then abs(net_amount) else 0 end) as total_sales,
+        sum(coalesce(realized_pnl, 0)) as realized_pnl
+    from trade_summary
+    group by portfolio_id, trade_month_start
+),
+
+-- DEPENDENCY ON PIPELINE B: Position snapshot for current holdings context
+portfolio_positions as (
+    select * from {{ ref('fact_portfolio_positions') }}
+),
+
+-- Aggregate positions to portfolio level
+portfolio_position_totals as (
+    select
+        portfolio_id,
+        sum(market_value) as total_market_value,
+        sum(cost_basis_value) as total_cost_basis,
+        sum(unrealized_pnl) as total_unrealized_pnl,
+        count(*) as position_count
+    from portfolio_positions
+    group by portfolio_id
 ),
 
 -- ISSUE: Another join when data could flow from upstream
@@ -206,40 +260,43 @@ with_derived_metrics as (
     from with_rankings wr
 ),
 
--- ISSUE: Correlated subquery for peer comparison (very slow)
+-- ISSUE: Separate peer aggregation CTEs (should use window functions with partition by portfolio_type)
+peer_return_aggs as (
+    select
+        p2.portfolio_type,
+        pvb2.valuation_date,
+        avg(pvb2.portfolio_cumulative_return) as peer_avg_return
+    from portfolio_vs_benchmark pvb2
+    inner join portfolios p2
+        on pvb2.portfolio_id = p2.portfolio_id
+    group by 1, 2
+),
+
+peer_sharpe_aggs as (
+    select
+        p2.portfolio_type,
+        rm2.valuation_date,
+        percentile_cont(0.5) within group (order by rm2.sharpe_ratio) as peer_median_sharpe
+    from risk_metrics rm2
+    inner join portfolios p2
+        on rm2.portfolio_id = p2.portfolio_id
+    group by 1, 2
+),
+
 with_peer_comparison as (
     select
         wdm.*,
-        -- ISSUE: Correlated subquery
-        (
-            select avg(pvb2.portfolio_cumulative_return)
-            from portfolio_vs_benchmark pvb2
-            inner join portfolios p2
-                on pvb2.portfolio_id = p2.portfolio_id
-            where p2.portfolio_type = (
-                select p3.portfolio_type
-                from portfolios p3
-                where p3.portfolio_id = wdm.portfolio_id
-            )
-            and pvb2.valuation_date = wdm.valuation_date
-        ) as peer_avg_return,
-        -- ISSUE: Another correlated subquery
-        (
-            select percentile_cont(0.5) within group (order by pvb2.sharpe_ratio)
-            from portfolio_vs_benchmark pvb2
-            inner join risk_metrics rm2
-                on pvb2.portfolio_id = rm2.portfolio_id
-                and pvb2.valuation_date = rm2.valuation_date
-            inner join portfolios p2
-                on pvb2.portfolio_id = p2.portfolio_id
-            where p2.portfolio_type = (
-                select p3.portfolio_type
-                from portfolios p3
-                where p3.portfolio_id = wdm.portfolio_id
-            )
-            and pvb2.valuation_date = wdm.valuation_date
-        ) as peer_median_sharpe
+        pra.peer_avg_return,
+        psa.peer_median_sharpe
     from with_derived_metrics wdm
+    inner join portfolios p_self
+        on wdm.portfolio_id = p_self.portfolio_id
+    left join peer_return_aggs pra
+        on p_self.portfolio_type = pra.portfolio_type
+        and wdm.valuation_date = pra.valuation_date
+    left join peer_sharpe_aggs psa
+        on p_self.portfolio_type = psa.portfolio_type
+        and wdm.valuation_date = psa.valuation_date
 ),
 
 -- ISSUE: Portfolio attributes added last

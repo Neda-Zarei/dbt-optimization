@@ -7,8 +7,8 @@ with source as (
         benchmark_id,
         benchmark_name,
         benchmark_ticker,
-        benchmark_type,
-        currency,
+        asset_class,
+        region,
         is_active,
         created_at,
         updated_at
@@ -31,8 +31,8 @@ select
     benchmark_id,
     trim(benchmark_name) as benchmark_name,
     upper(trim(benchmark_ticker)) as benchmark_ticker,
-    upper(benchmark_type) as benchmark_type,
-    upper(currency) as currency,
+    upper(asset_class) as asset_class,
+    upper(region) as region,
     is_active,
     created_at,
     updated_at

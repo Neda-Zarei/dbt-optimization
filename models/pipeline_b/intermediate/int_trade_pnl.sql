@@ -18,12 +18,18 @@ positions as (
         portfolio_id,
         security_id,
         ticker,
+        security_name,
+        security_type,
+        asset_class,
+        sector,
+        industry,
         trade_date,
         trade_type,
         trade_category,
         quantity,
         execution_price,
         net_amount,
+        commission,
         -- ISSUE: Multiple window functions with same partition
         sum(case
             when trade_category = 'PURCHASE' then quantity
