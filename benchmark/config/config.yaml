@@ -1,0 +1,131 @@
+# Benchmark Configuration
+
+baseline:
+  # Storage configuration
+  storage:
+    base_directory: "benchmark/baselines"
+    file_pattern: "baseline_{pipeline}_{timestamp}.json"
+    timestamp_format: "YYYYMMDD_HHMMSS"
+  
+  # Retention policies for automatic cleanup
+  retention:
+    # Maximum age of baselines in days (default: 90 days)
+    max_age_days: 90
+    
+    # Maximum number of baselines to keep per pipeline (default: 10)
+    max_count: 10
+    
+    # Enable automatic cleanup on startup (default: false)
+    cleanup_on_startup: false
+  
+  # Baseline capture settings
+  capture:
+    # Include metrics collection (requires Snowflake connection)
+    include_metrics: true
+    
+    # Include output validation (requires Snowflake connection)
+    include_validation: true
+    
+    # Collect query IDs and execution details
+    capture_execution_details: true
+  
+  # Baseline content settings
+  content:
+    # Include dbt version in baseline metadata
+    include_dbt_version: true
+    
+    # Include git commit hash in baseline metadata
+    include_git_commit: true
+    
+    # Include full query text in metrics (can increase file size)
+    include_query_text: false
+    
+    # Compression settings for large baselines
+    compress_large_files: false
+    compression_threshold_mb: 10
+
+comparison:
+  # Threshold configuration
+  thresholds:
+    # Path to thresholds configuration file
+    config_path: "benchmark/config/thresholds.yaml"
+  
+  # Comparison behavior
+  behavior:
+    # If true, improvements (negative deltas) are not reported as violations
+    # If false, improvements are reported as INFO-level violations
+    ignore_improvements: false
+    
+    # Report detailed per-model comparisons
+    report_per_model: true
+    
+    # Include pipeline-level aggregations in comparison
+    compare_aggregations: true
+    
+    # Report metrics that are missing in baseline or candidate
+    report_missing_metrics: true
+  
+  # Output settings
+  output:
+    # Write detailed text report
+    write_text_report: true
+    
+    # Write machine-readable JSON report
+    write_json_report: true
+    
+    # Output directory for reports
+    output_directory: "benchmark/results"
+    
+    # Report filename pattern: {pipeline}_{timestamp}.txt/json
+    report_pattern: "comparison_{pipeline}_{timestamp}"
+
+# CLI Configuration
+cli:
+  # Default output format
+  output_format: "text"  # text, json, or quiet
+  
+  # Color output settings
+  use_color: true
+  
+  # Default output directory for reports
+  output_directory: "benchmark/results"
+  
+  # Verbosity level (quiet, normal, verbose, debug)
+  verbosity: "normal"
+  
+  # Progress indicators
+  show_progress: true
+  
+  # Confirmation prompts
+  confirm_delete: true
+  
+  # Display options
+  display:
+    # Show execution time in baseline lists
+    show_execution_time: true
+    
+    # Show git commit hashes in baseline lists
+    show_git_commit: true
+    
+    # Show dbt version in baseline lists
+    show_dbt_version: true
+    
+    # Number of baselines to show per pipeline in list-baselines
+    max_baselines_per_pipeline: 10
+    
+    # Width of terminal output (0 = auto-detect)
+    terminal_width: 0
+  
+  # Benchmark run settings
+  benchmark:
+    # Automatically capture baseline if missing
+    auto_capture_baseline: false
+    
+    # Enable metrics collection during runs
+    enable_metrics: true
+    
+    # Enable output validation during runs
+    enable_validation: true
+    
+    # Report format for benchmark results
+    report_format: "json"

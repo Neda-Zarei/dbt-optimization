@@ -1,0 +1,431 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Benchmark Report Schema",
+  "description": "Comprehensive JSON report for dbt benchmark results including metrics, validation, and comparison",
+  "type": "object",
+  "required": ["schema_version", "metadata", "metrics"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Version of this report schema for compatibility tracking",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Execution context and system information",
+      "required": ["pipeline_id", "timestamp", "execution_duration_ms"],
+      "properties": {
+        "pipeline_id": {
+          "type": "string",
+          "description": "Pipeline identifier (A, B, C, etc.)"
+        },
+        "pipeline_name": {
+          "type": "string",
+          "description": "Human-readable pipeline name"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "ISO 8601 timestamp of report generation",
+          "format": "date-time"
+        },
+        "execution_start": {
+          "type": "string",
+          "description": "ISO 8601 timestamp when pipeline execution started",
+          "format": "date-time"
+        },
+        "execution_end": {
+          "type": "string",
+          "description": "ISO 8601 timestamp when pipeline execution ended",
+          "format": "date-time"
+        },
+        "execution_duration_ms": {
+          "type": "integer",
+          "description": "Total execution time in milliseconds"
+        },
+        "git_commit": {
+          "type": ["string", "null"],
+          "description": "Git commit SHA of the code being benchmarked"
+        },
+        "git_branch": {
+          "type": ["string", "null"],
+          "description": "Git branch name"
+        },
+        "dbt_version": {
+          "type": ["string", "null"],
+          "description": "Version of dbt used for execution"
+        },
+        "warehouse": {
+          "type": "object",
+          "description": "Warehouse configuration and state",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Warehouse name"
+            },
+            "size": {
+              "type": ["string", "null"],
+              "description": "Warehouse size (XS, S, M, L, XL, etc.)"
+            },
+            "region": {
+              "type": ["string", "null"],
+              "description": "Snowflake region"
+            },
+            "account": {
+              "type": ["string", "null"],
+              "description": "Snowflake account identifier"
+            }
+          }
+        },
+        "database": {
+          "type": "object",
+          "description": "Database configuration",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Database name"
+            },
+            "schema": {
+              "type": "string",
+              "description": "Schema name"
+            }
+          }
+        },
+        "environment": {
+          "type": "string",
+          "description": "Execution environment (dev, staging, prod, etc.)",
+          "enum": ["dev", "staging", "prod", "test", "other"]
+        },
+        "tags": {
+          "type": "object",
+          "description": "Custom tags for filtering and searching",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Performance metrics collected during execution",
+      "required": ["per_model", "aggregated"],
+      "properties": {
+        "per_model": {
+          "type": "object",
+          "description": "Metrics aggregated per model",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "model_name": {
+                "type": "string"
+              },
+              "raw": {
+                "type": "object",
+                "description": "Raw metric values",
+                "additionalProperties": {
+                  "type": ["number", "null"]
+                }
+              },
+              "formatted": {
+                "type": "object",
+                "description": "Human-readable formatted metric values",
+                "additionalProperties": {
+                  "type": ["string", "null"]
+                }
+              }
+            }
+          }
+        },
+        "aggregated": {
+          "type": "object",
+          "description": "Pipeline-level aggregated metrics",
+          "properties": {
+            "raw": {
+              "type": "object",
+              "description": "Raw aggregated metric values",
+              "additionalProperties": {
+                "type": ["number", "null"]
+              }
+            },
+            "formatted": {
+              "type": "object",
+              "description": "Formatted aggregated metric values",
+              "additionalProperties": {
+                "type": ["string", "null"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "description": "Output validation results (optional, included if validation was performed)",
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "Overall validation status",
+          "enum": ["pass", "warning", "fail"]
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "When validation was performed",
+          "format": "date-time"
+        },
+        "per_model": {
+          "type": "object",
+          "description": "Validation results per model",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "model_name": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["pass", "warning", "fail"]
+              },
+              "row_count": {
+                "type": "integer",
+                "description": "Number of rows in output"
+              },
+              "hash": {
+                "type": ["string", "null"],
+                "description": "Order-agnostic hash of output"
+              },
+              "message": {
+                "type": ["string", "null"],
+                "description": "Validation status message"
+              }
+            }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "properties": {
+            "total_models": {
+              "type": "integer"
+            },
+            "models_passed": {
+              "type": "integer"
+            },
+            "models_failed": {
+              "type": "integer"
+            },
+            "issues": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "description": "Comparison results against baseline (optional, included only if baseline exists)",
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "Overall comparison status",
+          "enum": ["pass", "warning", "error"]
+        },
+        "baseline_timestamp": {
+          "type": "string",
+          "description": "Timestamp of baseline used for comparison",
+          "format": "date-time"
+        },
+        "baseline_git_commit": {
+          "type": ["string", "null"],
+          "description": "Git commit of baseline"
+        },
+        "per_model": {
+          "type": "object",
+          "description": "Comparison results per model",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "model_name": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["pass", "warning", "error"]
+              },
+              "metrics": {
+                "type": "object",
+                "description": "Metric-level comparison results",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "baseline_value": {
+                      "type": ["number", "null"]
+                    },
+                    "candidate_value": {
+                      "type": ["number", "null"]
+                    },
+                    "delta": {
+                      "type": ["number", "null"]
+                    },
+                    "delta_percent": {
+                      "type": ["number", "null"]
+                    },
+                    "threshold": {
+                      "type": "number",
+                      "description": "Threshold value"
+                    },
+                    "threshold_type": {
+                      "type": "string",
+                      "description": "Type of threshold",
+                      "enum": ["percent", "absolute"]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["pass", "pass_improvement", "warning", "error"]
+                    },
+                    "message": {
+                      "type": ["string", "null"]
+                    }
+                  }
+                }
+              },
+              "violations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "metric_name": {
+                      "type": "string"
+                    },
+                    "severity": {
+                      "type": "string",
+                      "enum": ["INFO", "WARNING", "ERROR"]
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "aggregated": {
+          "type": "object",
+          "description": "Pipeline-level comparison metrics",
+          "properties": {
+            "metrics": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object"
+              }
+            },
+            "violations": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "violation_summary": {
+          "type": "object",
+          "properties": {
+            "total_violations": {
+              "type": "integer"
+            },
+            "by_severity": {
+              "type": "object",
+              "properties": {
+                "INFO": {
+                  "type": "integer"
+                },
+                "WARNING": {
+                  "type": "integer"
+                },
+                "ERROR": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "description": "High-level summary of benchmark results",
+      "properties": {
+        "overall_status": {
+          "type": "string",
+          "enum": ["pass", "warning", "error"]
+        },
+        "performance_overview": {
+          "type": "object",
+          "description": "Key performance metrics overview",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "number"
+              },
+              "formatted": {
+                "type": "string"
+              },
+              "percentile": {
+                "type": "string",
+                "description": "Position relative to baseline (better/worse)"
+              }
+            }
+          }
+        },
+        "top_regressions": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "properties": {
+              "model": {
+                "type": "string"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "delta_percent": {
+                "type": "number"
+              },
+              "severity": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "top_improvements": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "properties": {
+              "model": {
+                "type": "string"
+              },
+              "metric": {
+                "type": "string"
+              },
+              "delta_percent": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Additional notes or warnings"
+        }
+      }
+    }
+  }
+}

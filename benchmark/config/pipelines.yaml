@@ -1,0 +1,18 @@
+pipelines:
+  A:
+    name: "Simple Cashflow Pipeline"
+    schema: "pipeline_a"
+    models: "+pipeline_a.*"
+    dependencies: []
+  
+  B:
+    name: "Medium Complexity Trade Analytics"
+    schema: "pipeline_b"
+    models: "+pipeline_b.*"
+    dependencies: []
+  
+  C:
+    name: "Complex Portfolio Analytics"
+    schema: "pipeline_c"
+    models: "+pipeline_c.*"
+    dependencies: ["A", "B"]

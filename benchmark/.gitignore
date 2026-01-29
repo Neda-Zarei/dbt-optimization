@@ -1,0 +1,29 @@
+# Exclude benchmark results (output)
+results/
+
+# Exclude temporary files
+*.pyc
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.coverage
+*.log
+
+# Environment and IDE files
+.env
+.venv
+venv/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Keep tracked directories
+!baselines/
+!config/
+!scripts/

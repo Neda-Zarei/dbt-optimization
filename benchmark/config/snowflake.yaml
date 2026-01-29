@@ -1,0 +1,16 @@
+snowflake:
+  # Connection settings reference dbt profiles
+  account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+  user: "{{ env_var('SNOWFLAKE_USER') }}"
+  password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+  
+  # Database and warehouse from dbt profile
+  database: "DBT_DEMO"
+  warehouse: "COMPUTE_WH"
+  
+  # Role for query execution
+  role: "ACCOUNTADMIN"
+  
+  # Query configuration
+  query_timeout_seconds: 3600
+  max_retries: 3
